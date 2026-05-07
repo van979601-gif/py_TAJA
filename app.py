@@ -1,11 +1,6 @@
 import streamlit as st
-from streamlit_ace import st_ace
 import random
 import time
-
-# -----------------------------
-# 페이지 설정
-# -----------------------------
 
 st.set_page_config(
     page_title="Python 타자 연습",
@@ -14,18 +9,25 @@ st.set_page_config(
 )
 
 # -----------------------------
-# 문제 데이터
+# 난이도별 Python 연습 코드
 # -----------------------------
 
 BEGINNER = [
     "print('Hello World')",
+
+    """name = input("이름 입력: ")
+print(name)""",
 
     """for i in range(5):
     print(i)""",
 
     """x = 10
 y = 20
-print(x + y)"""
+print(x + y)""",
+
+    """numbers = [1, 2, 3]
+for n in numbers:
+    print(n)"""
 ]
 
 INTERMEDIATE = [
@@ -34,11 +36,25 @@ INTERMEDIATE = [
 
 print(add(3, 5))""",
 
-    """nums = [1, 2, 3]
+    """students = {
+    "kim": 90,
+    "lee": 80
+}
+
+for name, score in students.items():
+    print(name, score)""",
+
+    """nums = [1, 2, 3, 4]
 
 squared = [n**2 for n in nums]
 
-print(squared)"""
+print(squared)""",
+
+    """try:
+    x = int(input())
+    print(x)
+except ValueError:
+    print("숫자를 입력하세요")"""
 ]
 
 ADVANCED = [
@@ -58,7 +74,17 @@ print(p.greet())""",
 
     return fibonacci(n-1) + fibonacci(n-2)
 
-print(fibonacci(6))"""
+print(fibonacci(6))""",
+
+    """with open("sample.txt", "w") as f:
+    f.write("hello")
+
+with open("sample.txt", "r") as f:
+    print(f.read())""",
+
+    """data = list(map(lambda x: x * 2, [1, 2, 3, 4]))
+
+print(data)"""
 ]
 
 LEVELS = {
@@ -68,20 +94,20 @@ LEVELS = {
 }
 
 # -----------------------------
-# 세션 상태 초기화
+# 세션 상태
 # -----------------------------
-
-if "target_code" not in st.session_state:
-    st.session_state.target_code = ""
 
 if "started" not in st.session_state:
     st.session_state.started = False
 
+if "start_time" not in st.session_state:
+    st.session_state.start_time = 0
+
 if "finished" not in st.session_state:
     st.session_state.finished = False
 
-if "start_time" not in st.session_state:
-    st.session_state.start_time = 0
+if "target_code" not in st.session_state:
+    st.session_state.target_code = ""
 
 # -----------------------------
 # 제목
@@ -89,32 +115,34 @@ if "start_time" not in st.session_state:
 
 st.title("🐍 Python 코드 타자 연습")
 
+st.write("Python 코드를 그대로 입력하세요.")
+
 # -----------------------------
-# 상단 설정
+# 사용자 이름 입력
 # -----------------------------
 
-top1, top2 = st.columns(2)
+user_name = st.text_input(
+    "👤 이름 입력",
+    placeholder="이름을 입력하세요"
+)
 
-with top1:
-    user_name = st.text_input(
-        "👤 이름 입력",
-        placeholder="이름 입력"
-    )
+# -----------------------------
+# 난이도 선택
+# -----------------------------
 
-with top2:
-    difficulty = st.selectbox(
-        "난이도 선택",
-        ["초급", "중급", "고급"]
-    )
+difficulty = st.selectbox(
+    "난이도 선택",
+    ["초급", "중급", "고급"]
+)
 
 # -----------------------------
 # 문제 시작 버튼
 # -----------------------------
 
-if st.button("🚀 새 문제 시작"):
+if st.button("새 문제 시작"):
 
     if user_name.strip() == "":
-        st.warning("이름을 입력하세요.")
+        st.warning("이름을 입력해주세요.")
         st.stop()
 
     st.session_state.target_code = random.choice(
@@ -126,116 +154,85 @@ if st.button("🚀 새 문제 시작"):
     st.session_state.start_time = 0
 
 # -----------------------------
-# 문제 표시
+# 문제 출력
 # -----------------------------
 
-if st.session_state.target_code != "":
+if st.session_state.target_code:
 
-    left, right = st.columns(2)
+    st.subheader(f"🧑‍💻 {user_name}님의 문제")
 
-    # -----------------------------
-    # 왼쪽 문제 코드
-    # -----------------------------
+    st.code(
+        st.session_state.target_code,
+        language="python"
+    )
 
-    with left:
+    # 코드 입력창
+    user_input = st.text_area(
+        "⌨️ 코드 입력",
+        height=300,
+        placeholder="Python 코드를 입력하세요..."
+    )
 
-        st.subheader("📝 문제 코드")
-
-        st.code(
-            st.session_state.target_code,
-            language="python"
-        )
-
-    # -----------------------------
-    # 오른쪽 코드 에디터
-    # -----------------------------
-
-    with right:
-
-        st.subheader("⌨️ 코드 입력")
-
-        user_input = st_ace(
-            value="",
-            language="python",
-            theme="monokai",
-            keybinding="vscode",
-            font_size=15,
-            tab_size=4,
-            show_gutter=True,
-            wrap=True,
-            auto_update=True,
-            height=400,
-            placeholder="Python 코드를 입력하세요...",
-            key="ace_editor"
-        )
-
-    # -----------------------------
-    # 입력 시작 시간
-    # -----------------------------
-
+    # 시작 시간
     if user_input and not st.session_state.started:
-
         st.session_state.started = True
         st.session_state.start_time = time.time()
 
-    # -----------------------------
-    # 정확도 계산
-    # -----------------------------
-
-    if user_input:
-
-        target = st.session_state.target_code
-
-        correct = 0
-
-        for a, b in zip(user_input, target):
-            if a == b:
-                correct += 1
-
-        accuracy = (correct / len(target)) * 100
-
-        st.progress(min(int(accuracy), 100))
-
-        st.info(f"🎯 정확도: {accuracy:.1f}%")
-
-    # -----------------------------
-    # 정답 체크
-    # -----------------------------
-
+    # 정답 판정
     if (
-        user_input
-        and user_input.strip()
+        user_input.strip()
         == st.session_state.target_code.strip()
         and not st.session_state.finished
     ):
 
         st.session_state.finished = True
 
-        elapsed = (
-            time.time()
-            - st.session_state.start_time
-        )
+        elapsed = time.time() - st.session_state.start_time
 
-        chars = len(
-            st.session_state.target_code
-        )
+        chars = len(st.session_state.target_code)
 
         cpm = (chars / elapsed) * 60
 
         st.success(
-            f"🎉 {user_name}님 성공!"
+            f"🎉 {user_name}님 정답입니다!"
         )
 
-        c1, c2 = st.columns(2)
+        col1, col2 = st.columns(2)
 
-        with c1:
+        with col1:
             st.metric(
                 "⏱️ 시간",
                 f"{elapsed:.2f}초"
             )
 
-        with c2:
+        with col2:
             st.metric(
                 "⚡ CPM",
                 f"{cpm:.1f}"
             )
+
+# -----------------------------
+# 정확도 표시
+# -----------------------------
+
+if (
+    st.session_state.target_code
+    and user_input
+    and not st.session_state.finished
+):
+
+    target = st.session_state.target_code
+
+    correct = 0
+
+    for a, b in zip(user_input, target):
+        if a == b:
+            correct += 1
+
+    accuracy = (correct / len(target)) * 100
+
+    st.progress(min(int(accuracy), 100))
+
+    st.info(
+        f"🎯 현재 정확도: {accuracy:.1f}%"
+    )
