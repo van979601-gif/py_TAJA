@@ -109,9 +109,6 @@ if "finished" not in st.session_state:
 if "target_code" not in st.session_state:
     st.session_state.target_code = ""
 
-if "difficulty" not in st.session_state:
-    st.session_state.difficulty = "초급"
-
 # -----------------------------
 # 제목
 # -----------------------------
@@ -119,7 +116,15 @@ if "difficulty" not in st.session_state:
 st.title("🐍 Python 코드 타자 연습")
 
 st.write("Python 코드를 그대로 입력하세요.")
-st.write("자동 들여쓰기 지원 코드 입력창 제공")
+
+# -----------------------------
+# 사용자 이름 입력
+# -----------------------------
+
+user_name = st.text_input(
+    "👤 이름 입력",
+    placeholder="이름을 입력하세요"
+)
 
 # -----------------------------
 # 난이도 선택
@@ -131,12 +136,14 @@ difficulty = st.selectbox(
 )
 
 # -----------------------------
-# 새 문제 생성
+# 문제 시작 버튼
 # -----------------------------
 
 if st.button("새 문제 시작"):
 
-    st.session_state.difficulty = difficulty
+    if user_name.strip() == "":
+        st.warning("이름을 입력해주세요.")
+        st.stop()
 
     st.session_state.target_code = random.choice(
         LEVELS[difficulty]
@@ -147,33 +154,31 @@ if st.button("새 문제 시작"):
     st.session_state.start_time = 0
 
 # -----------------------------
-# 목표 코드 출력
+# 문제 출력
 # -----------------------------
 
 if st.session_state.target_code:
 
-    st.subheader("📝 제시 코드")
+    st.subheader(f"🧑‍💻 {user_name}님의 문제")
 
     st.code(
         st.session_state.target_code,
         language="python"
     )
 
-    st.subheader("⌨️ 입력")
-
     # 코드 입력창
     user_input = st.text_area(
-        "Python 코드를 입력하세요",
+        "⌨️ 코드 입력",
         height=300,
-        placeholder="여기에 Python 코드를 입력하세요..."
+        placeholder="Python 코드를 입력하세요..."
     )
 
-    # 시작 시간 기록
+    # 시작 시간
     if user_input and not st.session_state.started:
         st.session_state.started = True
         st.session_state.start_time = time.time()
 
-    # 정답 체크
+    # 정답 판정
     if (
         user_input.strip()
         == st.session_state.target_code.strip()
@@ -182,19 +187,17 @@ if st.session_state.target_code:
 
         st.session_state.finished = True
 
-        end_time = time.time()
-
-        elapsed = end_time - st.session_state.start_time
+        elapsed = time.time() - st.session_state.start_time
 
         chars = len(st.session_state.target_code)
 
         cpm = (chars / elapsed) * 60
 
-        accuracy = 100
+        st.success(
+            f"🎉 {user_name}님 정답입니다!"
+        )
 
-        st.success("정답입니다! 🎉")
-
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
 
         with col1:
             st.metric(
@@ -208,14 +211,8 @@ if st.session_state.target_code:
                 f"{cpm:.1f}"
             )
 
-        with col3:
-            st.metric(
-                "🎯 정확도",
-                f"{accuracy}%"
-            )
-
 # -----------------------------
-# 오타 비교 기능
+# 정확도 표시
 # -----------------------------
 
 if (
@@ -236,4 +233,6 @@ if (
 
     st.progress(min(int(accuracy), 100))
 
-    st.info(f"현재 정확도: {accuracy:.1f}%")
+    st.info(
+        f"🎯 현재 정확도: {accuracy:.1f}%"
+    )
