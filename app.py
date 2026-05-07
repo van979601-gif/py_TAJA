@@ -3,6 +3,10 @@ from streamlit_ace import st_ace
 import random
 import time
 
+# -----------------------------
+# 페이지 설정
+# -----------------------------
+
 st.set_page_config(
     page_title="Python 타자 연습",
     page_icon="🐍",
@@ -64,7 +68,7 @@ LEVELS = {
 }
 
 # -----------------------------
-# 세션 상태
+# 세션 상태 초기화
 # -----------------------------
 
 if "target_code" not in st.session_state:
@@ -89,25 +93,25 @@ st.title("🐍 Python 코드 타자 연습")
 # 상단 설정
 # -----------------------------
 
-col_top1, col_top2 = st.columns(2)
+top1, top2 = st.columns(2)
 
-with col_top1:
+with top1:
     user_name = st.text_input(
-        "👤 이름",
+        "👤 이름 입력",
         placeholder="이름 입력"
     )
 
-with col_top2:
+with top2:
     difficulty = st.selectbox(
-        "난이도",
+        "난이도 선택",
         ["초급", "중급", "고급"]
     )
 
 # -----------------------------
-# 시작 버튼
+# 문제 시작 버튼
 # -----------------------------
 
-if st.button("🚀 문제 시작"):
+if st.button("🚀 새 문제 시작"):
 
     if user_name.strip() == "":
         st.warning("이름을 입력하세요.")
@@ -125,17 +129,17 @@ if st.button("🚀 문제 시작"):
 # 문제 표시
 # -----------------------------
 
-if st.session_state.target_code:
+if st.session_state.target_code != "":
 
     left, right = st.columns(2)
 
     # -----------------------------
-    # 왼쪽 = 문제 코드
+    # 왼쪽 문제 코드
     # -----------------------------
 
     with left:
 
-        st.subheader("📝 제시 코드")
+        st.subheader("📝 문제 코드")
 
         st.code(
             st.session_state.target_code,
@@ -143,7 +147,7 @@ if st.session_state.target_code:
         )
 
     # -----------------------------
-    # 오른쪽 = 코드 입력창
+    # 오른쪽 코드 에디터
     # -----------------------------
 
     with right:
@@ -151,23 +155,26 @@ if st.session_state.target_code:
         st.subheader("⌨️ 코드 입력")
 
         user_input = st_ace(
-            placeholder="여기에 Python 코드를 입력하세요...",
+            value="",
             language="python",
             theme="monokai",
             keybinding="vscode",
-            font_size=16,
+            font_size=15,
             tab_size=4,
             show_gutter=True,
             wrap=True,
             auto_update=True,
-            height=400
+            height=400,
+            placeholder="Python 코드를 입력하세요...",
+            key="ace_editor"
         )
 
     # -----------------------------
-    # 타이머 시작
+    # 입력 시작 시간
     # -----------------------------
 
     if user_input and not st.session_state.started:
+
         st.session_state.started = True
         st.session_state.start_time = time.time()
 
@@ -192,7 +199,7 @@ if st.session_state.target_code:
         st.info(f"🎯 정확도: {accuracy:.1f}%")
 
     # -----------------------------
-    # 정답 처리
+    # 정답 체크
     # -----------------------------
 
     if (
@@ -204,9 +211,14 @@ if st.session_state.target_code:
 
         st.session_state.finished = True
 
-        elapsed = time.time() - st.session_state.start_time
+        elapsed = (
+            time.time()
+            - st.session_state.start_time
+        )
 
-        chars = len(st.session_state.target_code)
+        chars = len(
+            st.session_state.target_code
+        )
 
         cpm = (chars / elapsed) * 60
 
